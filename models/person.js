@@ -7,8 +7,19 @@ mongoose.connect(url)
   .catch(err => console.log(err))
   
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: Number
+  name: {
+    type: String,
+    minLength: 3,
+    required: true,
+  },
+  number: {
+    type: Number,
+    required: true,
+    validate: {
+      validator: (v) => /\d{3}-\d{3}-\d{4}/.test(v),
+      message: props => `${props.value} is not a valid phone number` 
+    },
+  } 
 })
 
 personSchema.set('toJSON', {

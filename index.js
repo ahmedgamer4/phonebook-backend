@@ -4,6 +4,7 @@ const morgan = require('morgan')
 const app = express()
 const cors = require('cors')
 const Person = require('./models/person')
+const { response } = require('express')
 
 const log = morgan((tokens, request, response) => {
   return [
@@ -71,7 +72,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
     .catch(err => next(err))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
   if (!body.name || !body.number) {
@@ -85,7 +86,9 @@ app.post('/api/persons', (request, response) => {
     number: body.number,
   })
 
-  person.save().then(result => response.json(result))
+  person.save()
+    .then(result => response.json(result))
+    .catch(err => next(err))
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
@@ -115,6 +118,9 @@ const errorHandler = (err, req, res, next) => {
 
   if (err === 'CaseError') {
     return res.status(400).send({err: 'maltforamtted id'})
+  }
+  else if (err === 'ValidationError') {
+    return res.status(400).send({err: err.message})
   }
   next(err)
 } 
