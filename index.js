@@ -1,48 +1,46 @@
 require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
+
 const app = express()
 const cors = require('cors')
-const Person = require('./models/person')
 const { response } = require('express')
+const Person = require('./models/person')
 
-const log = morgan((tokens, request, response) => {
-  return [
-    tokens.method(request, response),
-    tokens.url(request, response),
-    tokens.status(request, response),
-    tokens.res(request, response, 'content-length'), '-',
-    tokens['response-time'](request, response), `ms ${JSON.stringify(request.body)}`,
-  ].join(' ')
-})
+const log = morgan((tokens, request, response) => [
+  tokens.method(request, response),
+  tokens.url(request, response),
+  tokens.status(request, response),
+  tokens.res(request, response, 'content-length'), '-',
+  tokens['response-time'](request, response), `ms ${JSON.stringify(request.body)}`,
+].join(' '))
 
 app.use(cors())
 app.use(express.static('build'))
 app.use(express.json())
 app.use(log)
 
-
-let persons = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
+const persons = [
+  {
+    id: 1,
+    name: 'Arto Hellas',
+    number: '040-123456',
+  },
+  {
+    id: 2,
+    name: 'Ada Lovelace',
+    number: '39-44-5323523',
+  },
+  {
+    id: 3,
+    name: 'Dan Abramov',
+    number: '12-43-234345',
+  },
+  {
+    id: 4,
+    name: 'Mary Poppendieck',
+    number: '39-23-6423122',
+  },
 ]
 
 app.get('/', (request, response) => {
@@ -50,12 +48,12 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-  Person.find({}).then(people => response.json(people))
+  Person.find({}).then((people) => response.json(people))
 })
 
-app.get('/api/persons/:id', (request, response) =>{
+app.get('/api/persons/:id', (request, response) => {
   Person.findById(request.params.id)
-        .then(result => response.json(result))
+    .then((result) => response.json(result))
 })
 
 app.get('/info', (request, response) => {
@@ -64,20 +62,20 @@ app.get('/info', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
-  const id = request.params.id
+  const { id } = request.params
   Person.findByIdAndRemove(id)
-    .then(_ => {
+    .then((_) => {
       response.status(204).end()
     })
-    .catch(err => next(err))
+    .catch((err) => next(err))
 })
 
 app.post('/api/persons', (request, response, next) => {
-  const body = request.body
+  const { body } = request
 
   if (!body.name || !body.number) {
     return response.status(400).json({
-      error: 'name or number is missing'
+      error: 'name or number is missing',
     })
   }
 
@@ -87,13 +85,13 @@ app.post('/api/persons', (request, response, next) => {
   })
 
   person.save()
-    .then(result => response.json(result))
-    .catch(err => next(err))
+    .then((result) => response.json(result))
+    .catch((err) => next(err))
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
-  const id = req.params.id
-  const body = req.body
+  const { id } = req.params
+  const { body } = req
 
   const person = {
     name: body.name,
@@ -101,10 +99,10 @@ app.put('/api/persons/:id', (req, res, next) => {
   }
 
   Person.findByIdAndUpdate(id, person, { new: true })
-    .then(result => {
+    .then((result) => {
       res.json(result)
     })
-    .catch(err => next(err))
+    .catch((err) => next(err))
 })
 
 const unknownEndpoint = (request, response) => {
@@ -117,13 +115,13 @@ const errorHandler = (err, req, res, next) => {
   console.error(err.messsage)
 
   if (err === 'CaseError') {
-    return res.status(400).send({err: 'maltforamtted id'})
+    return res.status(400).send({ err: 'maltforamtted id' })
   }
-  else if (err === 'ValidationError') {
-    return res.status(400).send({err: err.message})
+  if (err === 'ValidationError') {
+    return res.status(400).send({ err: err.message })
   }
   next(err)
-} 
+}
 
 app.use(errorHandler)
 
